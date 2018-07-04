@@ -1,0 +1,271 @@
+---
+title: "Projeto Integrador - Exercicio 06"
+author: "Nelson de Campos Nolasco"
+output: html_document
+---
+---
+```{r, message=FALSE}
+
+library(readr)
+library(dplyr)
+
+```
+
+```{r, message=FALSE}
+
+enade14 <- read_csv2("https://raw.githubusercontent.com/neylsoncrepalde/introducao_ao_r/master/dados/enade_2014_amostra.csv")
+
+```
+
+---
+
+Olá. Este é o sexto exercício de nosso Projeto Integrador, o último relacionado a treinamento R. Neste exercício iremos praticar a programação de funções e sua mobilização de forma automatizada com a família de funções apply. Pau na máquina!
+
+## Exercícios:
+
+## 1. Escreva uma função que calcule a média, a mediana, a variância e o desvio padrão de um vetor numérico. A função deve retornar os resultados numa matriz. Teste a sua função com uma variável do banco de dados iris.
+
+```{r}
+
+analisa_dados <- function(dados){
+  
+  # cria a matriz bd e a popula
+  bd <- matrix(c(mean(dados), median(dados), var(dados), sd(dados)), nrow = 1, ncol = 4)
+  
+  # retorna o banco de dados bd
+  return(bd)
+}
+
+analisa_dados(iris$Sepal.Length)
+
+```
+
+## 2. Reescreva sua função de modo que ela seja capaz de processar vetores com dados completos e vetores com missing values. Deve haver uma opção para o usuário marcar se ele quer a remoção de missings ou não. Teste a sua função com uma variável numérica do banco de dados enade. Mostre os resultados COM REMOÇÃO de missings e SEM REMOÇÃO.
+
+### Código:
+
+```{r}
+
+analisa_dados <- function(dados, remove.na = FALSE){
+
+  # remove os missings
+  if(remove.na == TRUE){
+    dados = dados[!is.na(dados)]
+  }
+
+  # cria a matriz bd e a popula
+  bd <- matrix(c(mean(dados), median(dados), var(dados), sd(dados)), nrow = 1, ncol = 4)
+  
+  # retorna o banco de dados bd
+  return(bd)
+}
+
+```
+
+### Resultados:
+
+#### Teste com remoção de missings
+
+```{r}
+
+analisa_dados(enade14$nt_ger, remove.na = TRUE)
+
+```
+
+#### Teste sem remoção de missings
+
+```{r}
+
+analisa_dados(enade14$nt_ger)
+
+```
+
+## 3. Reescreva sua função de modo que ela aceite apenas vetores do typo integer ou numeric. Se o usuário tentar passar um vetor de outro tipo, a função deve exibir um ERRO e uma mensagem com a orientação: "Object is not integer or numeric". Dica: use o comando stop("mensagem"). Teste a função com uma variável numérica, uma variável integer e um objeto de outro tipo qualquer.
+
+### Código:
+
+```{r}
+
+analisa_dados <- function(dados, remove.na = FALSE){
+  
+  if ((class(dados) == "integer") | (class(dados) == "numeric")) {
+    
+    # remove os valores NA
+    if(remove.na == TRUE){
+      dados = dados[!is.na(dados)]
+    }
+    
+    # cria a matriz bd e a popula
+    bd <- matrix(c(mean(dados), median(dados), var(dados), sd(dados)), nrow = 1, ncol = 4)
+    
+    # retorna o banco de dados bd
+    return(bd)
+    
+  } else {
+    
+    # cria uma mensagem de erro
+    stop("Warning: Object is not integer or numeric!")
+    
+  }
+
+}
+
+```
+
+### Resultados:
+
+#### Teste com variável numeric
+
+```{r}
+
+analisa_dados(iris$Sepal.Length, remove.na = TRUE)
+
+```
+
+#### Teste com variável integer
+
+```{r}
+
+analisa_dados(enade14$nt_ger, remove.na = TRUE)
+
+```
+
+#### Teste com variável de outro tipo qualquer.
+
+```{r , error=TRUE}
+
+analisa_dados(enade14$qe_i2, remove.na = TRUE)
+
+```
+
+## 4. Agora, use a função sapply para executar sua função para todas as variáveis numéricas do banco de dados iris. Execute-a também para as variáveis idade, nota geral, nota da formação geral e nota do componente específico do banco de dados enade.
+
+### Variáveis do banco de dados Irís
+
+```{r}
+
+# seleciona explicitamente as variáveis númericas usando o %>% (pipe) do pacote dplyr
+data_iris <- iris %>% select(Sepal.Length, Sepal.Width, Petal.Length, Petal.Width)
+
+# repete a função analisa_dados para cada variável do data frame data_iris
+sapply(data_iris, analisa_dados)
+
+```
+
+### Variáveis do banco de dados ENADE 2014
+
+```{r}
+
+# seleciona explicitamente as variáveis indicadas
+data_enade <- enade14 %>% select(nu_idade, nt_ger, nt_fg, nt_ce)
+
+# repete a função analisa_dados e envia o parâmetro remove.na como TRUE para cada variável do data frame data_enade
+sapply(data_enade, analisa_dados, remove.na = TRUE)
+
+```
+
+## 5. Sabemos que as variáveis do questionário do estudante do ENADE relacionadas à IES possuem duas categorias que não são úteis para nossa análise, 7 e 8 (Não sei, não se aplica). Essas categorias precisam ser substituídas por NA's. Faça a substituição usando uma função programada por você e a função sapply.
+
+### Observação:
+
+Eu não entendi bem esta questão, nem se havia alguma variável especifica para fazer o tratamento dos dados, sendo assim, verifiquei qual variável os outros alunos estavam trabalhando e acabei por escolher a mesma que eles, a variável 'qe_i27' do banco de dados de amostras do ENADE 2014.
+
+### Código:
+
+```{r}
+
+insere_na <- function(dados, numero){
+
+    # altera o valor de dados para NA caso seja o número informado
+    dados[dados == numero] <- NA
+
+    return(dados)
+    
+}
+
+# atribui NA para quando o valor da variável for 7
+enade14$qe_i27 <- sapply(enade14$qe_i27, insere_na, 7)
+
+# atribui NA para quando o valor da variável for 8
+enade14$qe_i27 <- sapply(enade14$qe_i27, insere_na, 8)
+
+```
+
+### Resultado:
+
+```{r}
+
+# imprime a variável qe_i27
+print(enade14$qe_i27)
+
+```
+
+## Desafio
+
+## 6. Reescreva a sua função de estatísticas descritivas. Não utilize as funções prontas do R mas implemente a média, a variância e o desvio padrão (mediana não) a partir de suas fórmulas.
+
+### Código:
+
+```{r}
+
+analisa_dados <- function(dados, remove.na = FALSE){
+  
+  if ((class(dados) == "integer") | (class(dados) == "numeric")) {
+    
+    # remove os valores NA
+    if(remove.na == TRUE){
+      dados = dados[!is.na(dados)]
+    }
+    
+    # implementação dos calculos da média, da variância e do desvio padrão
+    media <- sum(dados) / length(dados)
+    variancia <- sum((dados - media)^2)/(length(dados) - 1)
+    desvio_padrao <- variancia^(1/2)
+    
+    # cria a matriz bd e a popula
+    bd <- matrix(c(media,
+                   variancia,
+                   desvio_padrao),
+                 nrow = 1, ncol = 3)
+    
+    # retorna o banco de dados bd
+    return(bd)
+    
+  } else {
+    
+    # cria uma mensagem de erro
+    stop("Warning: Object is not integer or numeric!")
+    
+  }
+  
+}
+
+```
+
+### Resultados:
+
+#### Novo teste com variável numeric
+
+```{r}
+
+analisa_dados(iris$Sepal.Length, remove.na = TRUE)
+
+```
+
+#### Novo teste com variável integer
+
+```{r}
+
+analisa_dados(enade14$nt_ger, remove.na = TRUE)
+
+```
+
+#### Novo teste com variável de outro tipo qualquer.
+
+```{r , error=TRUE}
+
+analisa_dados(enade14$qe_i2, remove.na = TRUE)
+
+```
+
+## Divirta-se!
